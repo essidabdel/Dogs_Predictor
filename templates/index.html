@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Dogs breeds - Upload</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner container">
+        <div class="brand" role="img" aria-label="Logo Dogs">Dogs Predictor</div>
+        <nav aria-label="Main navigation">
+          <a class="nav-link" href="/">Accueil</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container" id="main">
+      <h1 id="pageTitle">Prédicteur de race de chien</h1>
+      <p class="lead">Téléversez une photo et obtiens la liste des races les plus probables.</p>
+
+      <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data" aria-labelledby="pageTitle">
+        <div class="upload-grid">
+          <div class="upload-left">
+            <!-- Hidden input, use label as button -->
+            <input type="file" name="file" id="file" aria-label="Sélectionner une image" accept="image/*" required>
+            <label class="file-label primary" for="file" role="button" tabindex="0">Choisir une image</label>
+            <button type="submit" id="submitBtn" class="primary" aria-disabled="false">Lancer la prédiction</button>
+            <div class="muted small">Formats d'image variés supportés • Aucune installation supplémentaire requise</div>
+          </div>
+
+          <div class="upload-right">
+            <div id="dropArea" class="preview-box drop-area" role="region" aria-live="polite" aria-label="Aperçu de l'image">
+              <div id="skeleton" class="skeleton" {% if last_image %}hidden{% endif %}>
+                <div class="skeleton-figure"></div>
+                <div class="skeleton-text"></div>
+              </div>
+              <img id="previewImg" src="{% if last_image %}{{ last_image_url }}{% else %}/static/uploads/last_upload.jpg{% endif %}" alt="prévisualisation" class="preview" {% if not last_image %}hidden{% endif %}>
+              <div id="previewHelp" class="small muted">Aperçu</div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {% if not labels_available %}
+      <div class="note" role="status">Remarque: labels non fournis — les résultats peuvent afficher des index si `labels.txt` est manquant.</div>
+      {% endif %}
+    </main>
+
+    <!-- Loading overlay shown while predicting -->
+    <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+      <div class="spinner" role="status" aria-live="polite" aria-label="Prédiction en cours"></div>
+      <div class="loading-text">Prédiction en cours…</div>
+    </div>
+
+    <!-- Toast for small messages -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script>
+      const input = document.getElementById('file');
+      const preview = document.getElementById('previewImg');
+      const help = document.getElementById('previewHelp');
+      const dropArea = document.getElementById('dropArea');
+      const skeleton = document.getElementById('skeleton');
+      const loading = document.getElementById('loadingOverlay');
+      const submitBtn = document.getElementById('submitBtn');
+      const toast = document.getElementById('toast');
+
+      function showToast(msg, ms=2500){
+        toast.textContent = msg; toast.hidden = false; toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); toast.hidden = true; }, ms);
+      }
+
+      function updatePreviewFile(file){
+        try{
+          const url = URL.createObjectURL(file);
+          preview.src = url;
+          preview.hidden = false;
+          skeleton.hidden = true;
+          help.textContent = `Fichier: ${file.name}`;
+        }catch(e){
+          showToast('Impossible d’afficher l’aperçu');
+        }
+      }
+
+      input.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        updatePreviewFile(f);
+      });
+
+      // Drag & drop support
+      ;['dragenter','dragover'].forEach(ev => dropArea.addEventListener(ev, (e)=>{ e.preventDefault(); dropArea.classList.add('dragover'); }));
+      ;['dragleave','drop'].forEach(ev => dropArea.addEventListener(ev, (e)=>{ e.preventDefault(); dropArea.classList.remove('dragover'); }));
+      dropArea.addEventListener('drop', (e)=>{
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        input.files = e.dataTransfer.files;
+        updatePreviewFile(f);
+      });
+
+      // Show loading overlay on submit
+      document.getElementById('uploadForm').addEventListener('submit', (e)=>{
+        // simple UI block while server responds
+        loading.style.display = 'flex';
+        loading.setAttribute('aria-hidden','false');
+        submitBtn.setAttribute('disabled','true');
+        submitBtn.setAttribute('aria-disabled','true');
+      });
+
+      // keyboard accessibility: label acts as button
+      document.querySelectorAll('.file-label').forEach(el=>{
+        el.addEventListener('keydown', (e)=>{ if(e.key=== 'Enter' || e.key===' ') { e.preventDefault(); input.click(); } });
+      });
+    </script>
+  </body>
+</html>

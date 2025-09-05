@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Résultat - Dogs breeds</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Résultat</h1>
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% else %}
+  {% set top_score_raw = results[0]['score'] if results and results|length > 0 else 0 %}
+  {% set top_score = top_score_raw|float %}
+        {% if top_score >= 0.75 %}
+          {% set conf_label = 'Confiance élevée' %}
+          {% set conf_class = 'high' %}
+        {% elif top_score >= 0.5 %}
+          {% set conf_label = 'Confiance modérée' %}
+          {% set conf_class = 'med' %}
+        {% else %}
+          {% set conf_label = 'Confiance faible' %}
+          {% set conf_class = 'low' %}
+        {% endif %}
+        <div class="result-grid">
+          <div class="result-left">
+              <div class="card winner-card">
+                <h3>Résultat</h3>
+                <img src="{{ img_url }}" alt="uploaded image" class="result-img">
+                {% set top_label = results[0]['label'] %}
+                {% set top_score = results[0]['score']|float %}
+                <div class="winner">
+                  <div class="winner-title">Meilleure correspondance</div>
+                  <div class="winner-name">{{ top_label }}</div>
+                  <div class="winner-score">{{ (top_score * 100)|round(2) }}%</div>
+                  <div class="confidence {{ 'high' if top_score>=0.7 else 'med' if top_score>=0.4 else 'low' }}">Confiance: {{ (top_score*100)|round(1) }}%</div>
+                </div>
+              </div>
+          </div>
+
+          <div class="result-right">
+            <div class="card">
+              <h3>Top prédictions</h3>
+              <canvas id="chartTop"></canvas>
+              <ol class="pred-list">
+                {% for r in results %}
+                  {% set s = (r['score']|float * 100) %}
+                  <li><strong>{{ loop.index }}.</strong> {{ r['label'] }} <span class="pr">{{ s|round(2) }}%</span></li>
+                {% endfor %}
+              </ol>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <p class="mt"><a href="/">← Faire une autre prédiction</a></p>
+    </div>
+
+    <script>
+      {% if results %}
+      // Prepare labels and percentages (0..100)
+      const labels = {{ results | map(attribute='label') | list | tojson }};
+      const scores = {{ results | map(attribute='score') | list | tojson }}.map(s => Math.round(s*10000)/100);
+
+      const ctx = document.getElementById('chartTop').getContext('2d');
+      const gradient = ctx.createLinearGradient(0,0,600,0);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+
+      const bg = labels.map((l,i)=> i===0 ? '#32a852' : gradient);
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '%',
+            data: scores,
+            backgroundColor: bg,
+            borderRadius: 8,
+            barThickness: 20
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#fff',
+              anchor: 'end',
+              align: 'right',
+              formatter: v => v + '%'
+            }
+          },
+          scales: {
+            x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
+            y: { ticks: { autoSkip: false } }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+      {% endif %}
+    </script>
+  </body>
+</html>

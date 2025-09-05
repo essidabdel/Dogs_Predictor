@@ -1,0 +1,7 @@
+flask>=2.0.0
+pillow
+numpy
+# If you want to run predictions locally in this image, uncomment tensorflow below.
+# Note: tensorflow is large and may require specific platform builds.
+# tensorflow>=2.0.0
+tensorflow>=2.0.0; platform_system != 'Windows'
