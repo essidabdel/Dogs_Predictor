@@ -41,7 +41,7 @@ pip install tensorflow
 python app.py
 👉 Application accessible sur http://localhost:5000
 
-🚀 Utilisation
+## 🚀 Utilisation
 Aller sur la page d’accueil
 
 Uploader une image de chien 🐕
@@ -50,14 +50,14 @@ Le modèle EfficientNetV2S renvoie les Top 5 prédictions de races avec leurs pr
 
 L’image est sauvegardée dans static/uploads/last_upload.jpg et affichée sur la page résultat
 
-📝 Notes
+## 📝 Notes
 Si TensorFlow n’est pas installé, un message d’erreur clair s’affiche dans l’UI
 
 labels.txt est requis pour des sorties lisibles
 
 EfficientNetV2S a été choisi pour son excellent compromis vitesse / précision sur la classification d’images
 
-🎯 Exemple de résultat
+## 🎯 Exemple de résultat
 📷 → Upload image
 
 ➡️ Résultats :
